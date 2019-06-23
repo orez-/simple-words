@@ -13,9 +13,29 @@ Parameters:
       Slack token for the app this code will act as.
 
 Resources:
+  SimpleWordsRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      DefinitionBody:
+        swagger: 2.0
+        info:
+          title:
+            Ref: AWS::StackName
+        paths:
+          "/":
+            post:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                # Hardcode SimpleWordsApplication.Arn to resolve circular dependency
+                uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:SimpleWordsApplication${AWS::StackName}/invocations"
+              responses: {}
+
   SimpleWordsApplication:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: !Sub "SimpleWordsApplication${AWS::StackName}"
       Handler: main.lambda_main
       Runtime: python3.7
       CodeUri: main.py
@@ -30,3 +50,10 @@ Resources:
           Properties:
             Path: /
             Method: POST
+            RestApiId:
+              Ref: SimpleWordsRestApi
+
+Outputs:
+  WebhookUrl:
+    Description: URL of the application webhook
+    Value: !Sub "https://${SimpleWordsRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"

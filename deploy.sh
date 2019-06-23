@@ -12,11 +12,11 @@ fi
 aws cloudformation package \
     --template-file cloudformation.yml \
     --output-template-file cloudformation.out.yml \
-    --s3-bucket ${ARTIFACT_BUCKET}
+    --s3-bucket "${ARTIFACT_BUCKET}"
 if [ "$#" -gt 2 ]; then
     aws cloudformation deploy \
         --template-file cloudformation.out.yml \
-        --stack-name ${STACK_NAME} \
+        --stack-name "${STACK_NAME}" \
         --capabilities CAPABILITY_IAM \
         --parameter-overrides \
         "SimpleWordsChannel=${SIMPLE_WORDS_CHANNEL}" \
@@ -24,6 +24,10 @@ if [ "$#" -gt 2 ]; then
 else
     aws cloudformation deploy \
         --template-file cloudformation.out.yml \
-        --stack-name ${STACK_NAME} \
+        --stack-name "${STACK_NAME}" \
         --capabilities CAPABILITY_IAM
 fi
+
+aws cloudformation describe-stacks --stack-name "${STACK_NAME}" \
+    --query "Stacks[0].Outputs[?OutputKey=='WebhookUrl'].OutputValue" \
+    --output text
