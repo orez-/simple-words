@@ -1,0 +1,32 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  SimpleWordsChannel:
+    Type: String
+    Description: |
+      Slack channel the app will watch.
+  SlackToken:
+    Type: String
+    Description: |
+      Slack token for the app this code will act as.
+
+Resources:
+  SimpleWordsApplication:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: main.lambda_main
+      Runtime: python3.7
+      CodeUri: main.py
+      Timeout: 10
+      Environment:
+        Variables:
+          SIMPLE_WORDS_CHANNEL: !Ref SimpleWordsChannel
+          SLACK_TOKEN: !Ref SlackToken
+      Events:
+        SimpleWordsWebhook:
+          Type: Api
+          Properties:
+            Path: /
+            Method: POST

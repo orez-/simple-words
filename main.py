@@ -1,19 +1,19 @@
 # Adapted from https://gist.github.com/lynn/aeea4fdd057cfa5396a7f2923280a810
 import html
+import json
 import logging
 import os
 import re
 import sys
 import traceback
 
-import flask
-import requests
+try:
+    import botocore.vendored.requests as requests
+except ImportError:
+    import requests
 
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-
-
-app = flask.Flask(__name__)
 
 
 SIMPLE_WORDS_CHANNEL = os.environ['SIMPLE_WORDS_CHANNEL']
@@ -123,6 +123,17 @@ def route_message(body):
         return "nada", 200
 
 
-@app.route('/', methods=["POST"])
-def hello_world():
-    return route_message(flask.request.json)
+def build_response(response):
+    if isinstance(response, tuple):
+        body, status = response
+        return {"body": body, "statusCode": status}
+    resp = {"statusCode": 200}
+    if response:
+        resp['body'] = str(response)
+    return resp
+
+
+def lambda_main(event, context):
+    del context
+    body = json.loads(event['body'])
+    return build_response(route_message(body))
